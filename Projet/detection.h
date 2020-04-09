@@ -10,6 +10,6 @@
 
 void detection_start(void);
 
-
+bool get_canAdvance(void);
 
 #endif /* DETECTION_H_ */

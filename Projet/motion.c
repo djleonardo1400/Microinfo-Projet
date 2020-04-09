@@ -8,6 +8,7 @@
 #include <motors.h>
 #include <sensors/proximity.h>
 #include <sensors/imu.h>
+#include <detection.h>
 #include <usbcfg.h>
 #include <chprintf.h>
 #include <i2c_bus.h>
@@ -77,7 +78,7 @@ static THD_FUNCTION(Motion, arg) {
     		left_motor_set_speed(-ROTATION_SPEED);
     }
 
-    if(move>0){
+    if(move>0 && get_canAdvance()){
     		move--;
     		inclination = (FACTOR*abs(acc_true[Y_AXIS]))/abs(acc_offsets[Z_AXIS]);
     		if(inclination > MAX_INCLINATION) inclination = MAX_INCLINATION;

@@ -76,8 +76,6 @@ int main(void)
     messagebus_init(&bus, &bus_lock, &bus_condvar);
     //messagebus_init(&bus, &prox_topic_lock, &prox_topic_condvar);
 
-    messagebus_topic_t *imu_topic = messagebus_find_topic_blocking(&bus, "/imu");
-    imu_msg_t imu_values;
 
     proximity_start();
 
