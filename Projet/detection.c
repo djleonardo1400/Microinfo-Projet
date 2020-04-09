@@ -20,6 +20,7 @@
 static bool canAdvance = true;
 
 void led_play(int ir_val[]);
+void obstacle_in_front(int ir_val[]);
 
 static THD_WORKING_AREA(waDetection, 256);
 static THD_FUNCTION(Detection, arg) {
@@ -39,8 +40,8 @@ static THD_FUNCTION(Detection, arg) {
     	for(int i=0;i<PROXIMITY_NB_CHANNELS;i++){
     		ir_values[i] = get_calibrated_prox(i);
     	}
-    	chprintf((BaseSequentialStream *)&SD3, "IR1=%d IR2=%d IR3=%d IR4=%d IR5=%d IR6=%d IR7=%d IR8=%d \r\n\n",
-    			ir_values[0],ir_values[1],ir_values[2],ir_values[3],ir_values[4],ir_values[5],ir_values[6],ir_values[7]);
+    //	chprintf((BaseSequentialStream *)&SD3, "IR1=%d IR2=%d IR3=%d IR4=%d IR5=%d IR6=%d IR7=%d IR8=%d \r\n\n",
+    	//		ir_values[0],ir_values[1],ir_values[2],ir_values[3],ir_values[4],ir_values[5],ir_values[6],ir_values[7]);
 
     	obstacle_in_front(ir_values);
     	led_play(ir_values);
@@ -72,7 +73,6 @@ void led_play(int ir_val[]){
 	} else set_led(LED7,0);
 
 }
-
 void obstacle_in_front(int ir_val[]){
 	if(ir_val[0]>IR_TRESHOLD || ir_val[7]>IR_TRESHOLD ||ir_val[1]>IR_TRESHOLD ||ir_val[6]>IR_TRESHOLD){
 		canAdvance = false;
