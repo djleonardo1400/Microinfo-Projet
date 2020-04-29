@@ -144,7 +144,7 @@ void imu_start(void)
     status = mpu9250_setup(MPU9250_ACC_FULL_RANGE_2G
 		                  | MPU9250_GYRO_FULL_RANGE_250DPS
 		                  | MPU9250_SAMPLE_RATE_DIV(100));
-		                  //| MPU60X0_LOW_PASS_FILTER_6)
+		                  //| MPU60X0_LOW_PASS_FILTER_4);
 
     //not tested yet because the auxilliary I2C of the MPU-9250 is condamned due
     //to PCB correction on the e-puck2-F4, so the magnetometer cannot be read...
