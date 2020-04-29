@@ -22,9 +22,9 @@
 #define THRESHOLD_ROTATION 500
 #define MAX_INCLINATION 2600
 #define FACTOR 10000
-#define ROTATION_SPEED 500
-#define THRESHOLD_MAX_R_SPEED 0.68
-#define ROTATION_CONST 441
+#define MAX_ROTATION_SPEED 500
+#define MAX_ANGLE_PROPORTIONAL_R_SPEED 0.68
+#define ROTATION_CONST 735
 
 static THD_WORKING_AREA(waMotion, 256);
 static THD_FUNCTION(Motion, arg) {
@@ -63,24 +63,24 @@ static THD_FUNCTION(Motion, arg) {
     if(acc_true[X_AXIS]> 0){
 
     		//rotate anticlockwise
-    		if(fabs(angle)<THRESHOLD_MAX_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ROTATION){
+    		if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ROTATION){
     			rot_speedR = ROTATION_CONST*fabs(angle);
     			rot_speedL = -ROTATION_CONST*fabs(angle);
     		} else {
-    			rot_speedR = ROTATION_SPEED;
-    			rot_speedL = -ROTATION_SPEED;
+    			rot_speedR = MAX_ROTATION_SPEED;
+    			rot_speedL = -MAX_ROTATION_SPEED;
     		}
     		//advance_speed = 0;
 
     }else if(acc_true[X_AXIS]< 0){
 
 		//rotate anticlockwise
-    		if(fabs(angle)<THRESHOLD_MAX_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ROTATION){
+    		if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ROTATION){
     			rot_speedR = -ROTATION_CONST*fabs(angle);
     			rot_speedL = ROTATION_CONST*fabs(angle);
     		} else {
-    			rot_speedR = -ROTATION_SPEED;
-    			rot_speedL = ROTATION_SPEED;
+    			rot_speedR = -MAX_ROTATION_SPEED;
+    			rot_speedL = MAX_ROTATION_SPEED;
     		}
 		//advance_speed = 0;
     }
@@ -101,16 +101,16 @@ static THD_FUNCTION(Motion, arg) {
     	    //advance_speed = MOTOR_SPEED_LIMIT*inclination/MAX_INCLINATION;
     		if(acc_true[Y_AXIS] > THRESHOLD_ROTATION){
     			advance_speed=0;
-    		} else if(fabs(angle)<THRESHOLD_MAX_R_SPEED && abs(acc_true[X_AXIS]) > THRESHOLD_ROTATION){
-    	    		advance_speed = MOTOR_SPEED_LIMIT/3*2*((THRESHOLD_MAX_R_SPEED - fabs(angle))/THRESHOLD_MAX_R_SPEED)*inclination/MAX_INCLINATION;
+    		} else if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && abs(acc_true[X_AXIS]) > THRESHOLD_ROTATION){
+    	    		advance_speed = MOTOR_SPEED_LIMIT/3*2*((MAX_ANGLE_PROPORTIONAL_R_SPEED - fabs(angle))/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
     	    		//advance_speed = MOTOR_SPEED_LIMIT;
     	    	} else if(abs(acc_true[X_AXIS])< THRESHOLD_ROTATION){
-    	    		advance_speed = MOTOR_SPEED_LIMIT/3*2*((THRESHOLD_MAX_R_SPEED - fabs(angle))/THRESHOLD_MAX_R_SPEED)*inclination/MAX_INCLINATION;
+    	    		advance_speed = MOTOR_SPEED_LIMIT/3*2*((MAX_ANGLE_PROPORTIONAL_R_SPEED - fabs(angle))/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
     	    		rot_speedR = 0;
     	    		rot_speedL = 0;
     	    	}
     	    	//chprintf((BaseSequentialStream *)&SD3, "speed =%d \r\n\n",advance_speed);
-    	    	if(fabs(angle)>THRESHOLD_MAX_R_SPEED){
+    	    	if(fabs(angle)>MAX_ANGLE_PROPORTIONAL_R_SPEED){
     	    		advance_speed = 0;
     	    	}
     }
