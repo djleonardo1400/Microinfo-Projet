@@ -1,3 +1,9 @@
+/*
+ * main.h
+ *
+ *  Created on: 2 Apr 2020
+ *      Author: Leonardo Panattoni / Demar Künzle
+ */
 #ifndef MAIN_H
 #define MAIN_H
 
