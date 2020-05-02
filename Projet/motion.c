@@ -9,6 +9,7 @@
 #include <sensors/imu.h>
 #include <detection.h>
 #include <arm_math.h>
+//#include <chprintf.h>
 #include <leds.h>
 
 #define NB_AXIS 3
@@ -21,6 +22,7 @@
 #define FACTOR 10000
 #define MAX_ROTATION_SPEED 500
 #define MAX_ADVANCE_SPEED 750
+#define CYCLES_TO_DESTUCK_180 10
 #define MAX_ANGLE_PROPORTIONAL_R_SPEED 0.68
 #define ROTATION_CONST 735
 
@@ -37,6 +39,7 @@ static THD_FUNCTION(Motion, arg) {
     int16_t advance_speed = 0;
     int16_t rot_speedL = 0;
     int16_t rot_speedR = 0;
+    int16_t let_rotate = 0;
     float inclination = 0;
     float angle;
 
@@ -56,28 +59,28 @@ static THD_FUNCTION(Motion, arg) {
     		//angle formed between X and Y axis, used for alignment.
     		angle = atan(((float) acc_true[X_AXIS])/acc_true[Y_AXIS]);
 
-    		if(acc_true[X_AXIS]> 0){
-
-    			//anti-clockwise rotation. Faster for greater angles
-
-    			if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ACC){
-    				rot_speedR = ROTATION_CONST*fabs(angle);
-    				rot_speedL = -ROTATION_CONST*fabs(angle);
-    			} else {
-    				rot_speedR = MAX_ROTATION_SPEED;
-    				rot_speedL = -MAX_ROTATION_SPEED;
-    			}
+    		//rotation speed attribution
+    		if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ACC){
+    			rot_speedR = -ROTATION_CONST*angle;
+    			rot_speedL = ROTATION_CONST*angle;
     		}else if(acc_true[X_AXIS]< 0){
+    			rot_speedR = -MAX_ROTATION_SPEED;
+    			rot_speedL = MAX_ROTATION_SPEED;
+    		}else{
+    			rot_speedR = MAX_ROTATION_SPEED;
+    			rot_speedL = -MAX_ROTATION_SPEED;
+    		}
 
-    			//clockwise rotation. Faster for greater angles
-
-    			if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ACC){
-    				rot_speedR = -ROTATION_CONST*fabs(angle);
-    				rot_speedL = ROTATION_CONST*fabs(angle);
-    			} else {
-    				rot_speedR = -MAX_ROTATION_SPEED;
-    				rot_speedL = MAX_ROTATION_SPEED;
-    			}
+    		//Destucking when new direction is changed to 180°.
+    		//Solves a problem that made the robot sometimes "shake" because of X axis value that changed sign very often near 0 value (180°).
+    		//We let the robot rotate anti-clockwise for 10 cycles to get it out of that problematic zone and let the other conditions handle back when done.
+    		if(acc_true[Y_AXIS] >THRESHOLD_ACC && acc_true[X_AXIS]>-THRESHOLD_ACC && acc_true[X_AXIS]<THRESHOLD_ACC){
+    			let_rotate = CYCLES_TO_DESTUCK_180;
+    		}
+    		if(let_rotate>0){
+    			let_rotate--;
+    			rot_speedR = MAX_ROTATION_SPEED;
+    			rot_speedL = -MAX_ROTATION_SPEED;
     		}
 
     		//STOP condition, when on leveled surface.
@@ -100,7 +103,7 @@ static THD_FUNCTION(Motion, arg) {
     			}
     			else if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && abs(acc_true[X_AXIS]) > THRESHOLD_ACC){
     				advance_speed = MAX_ADVANCE_SPEED*((MAX_ANGLE_PROPORTIONAL_R_SPEED - fabs(angle))/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
-    			} else if(abs(acc_true[X_AXIS])< THRESHOLD_ACC){
+    			}else if(abs(acc_true[X_AXIS])< THRESHOLD_ACC){
     				advance_speed = MAX_ADVANCE_SPEED*((MAX_ANGLE_PROPORTIONAL_R_SPEED - fabs(angle))/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
 
     				//rotation do not occur when aligned
@@ -113,12 +116,10 @@ static THD_FUNCTION(Motion, arg) {
     				advance_speed = 0;
     			}
     		}
-
     		//check if there's an obstacle in front of robot. Only rotation allowed if so.
     		if(!get_canAdvance()){
     			advance_speed = 0;
     		}
-
     		//set motors speed
     		right_motor_set_speed(advance_speed + rot_speedR);
     		left_motor_set_speed(advance_speed + rot_speedL);
