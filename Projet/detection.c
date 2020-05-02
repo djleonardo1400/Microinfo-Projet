@@ -10,6 +10,8 @@
 #include <sensors/proximity.h>
 #include <leds.h>
 #include <chprintf.h>
+#include <audio/audio_thread.h>
+#include <audio/play_melody.h>
 
 #define IR_TRESHOLD 200
 static bool canAdvance = true;
@@ -78,6 +80,12 @@ void obstacle_in_front(int ir_val[]){
 	if(ir_val[IR_1]>IR_TRESHOLD || ir_val[IR_8]>IR_TRESHOLD ||ir_val[IR_2]>IR_TRESHOLD ||ir_val[IR_7]>IR_TRESHOLD){
 		canAdvance = false;
 	} else canAdvance = true;
+
+	if(ir_val[IR_1]>IR_TRESHOLD && ir_val[IR_2]>IR_TRESHOLD && ir_val[IR_3]>IR_TRESHOLD && ir_val[IR_4]>IR_TRESHOLD
+		&& ir_val[IR_5]>IR_TRESHOLD && ir_val[IR_6]>IR_TRESHOLD && ir_val[IR_7]>IR_TRESHOLD && ir_val[IR_8]>IR_TRESHOLD){
+
+		 playMelody(5,0,NULL);
+	}
 }
 
 bool get_canAdvance(void){
