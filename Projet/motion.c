@@ -13,6 +13,7 @@
 #include <leds.h>
 #include <audio/audio_thread.h>
 #include <audio/play_melody.h>
+#include <melodies.h>
 
 #define NB_AXIS 3
 #define X_AXIS 0
@@ -51,7 +52,8 @@ static THD_FUNCTION(Motion, arg) {
     acc_offsets[Z_AXIS] = get_acc_filtered(Z_AXIS, 20);
 
     //dac_start();
-    playMelody(MARIO_START,0,NULL);
+    //playMelody(MARIO_START,0,NULL);
+    playMelody(EXTERNAL_SONG,ML_SIMPLE_PLAY,get_xp_boot());
     //dac_stop();
 
     while(1){
