@@ -20,6 +20,8 @@
 #include <arm_math.h>
 #include <motion.h>
 #include <detection.h>
+#include <audio/audio_thread.h>
+#include <audio/play_melody.h>
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
@@ -61,9 +63,14 @@ int main(void)
     //init the IR sensors
     proximity_start();
 
+    dac_start();
+
     //init motion and detection processes
+    playMelodyStart();
+    chThdSleepMilliseconds(500);
     motion_start();
     detection_start();
+
 
     while (1) {
     		//waits 1 second

@@ -11,6 +11,9 @@
 #include <arm_math.h>
 //#include <chprintf.h>
 #include <leds.h>
+#include <audio/audio_thread.h>
+#include <audio/play_melody.h>
+#include <melodies.h>
 
 #define NB_AXIS 3
 #define X_AXIS 0
@@ -48,6 +51,11 @@ static THD_FUNCTION(Motion, arg) {
     acc_offsets[Y_AXIS] = get_acc_filtered(Y_AXIS, 20);
     acc_offsets[Z_AXIS] = get_acc_filtered(Z_AXIS, 20);
 
+    //dac_start();
+    //playMelody(MARIO_START,0,NULL);
+    playMelody(EXTERNAL_SONG,ML_SIMPLE_PLAY,get_xp_boot());
+    //dac_stop();
+
     while(1){
 
     		time = chVTGetSystemTime();
@@ -55,6 +63,7 @@ static THD_FUNCTION(Motion, arg) {
     		//actual accelerations, filtered for abrupt acceleration changes and noise
     		acc_true[X_AXIS] = get_acc_filtered(X_AXIS, 10) - acc_offsets[X_AXIS];
     		acc_true[Y_AXIS] = get_acc_filtered(Y_AXIS, 10) - acc_offsets[Y_AXIS];
+
 
     		//angle formed between X and Y axis, used for alignment.
     		angle = atan(((float) acc_true[X_AXIS])/acc_true[Y_AXIS]);
