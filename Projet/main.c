@@ -12,12 +12,10 @@
 #include "memory_protection.h"
 #include <usbcfg.h>
 #include <main.h>
-#include <chprintf.h>
 #include <msgbus/messagebus.h>
 #include <motors.h>
 #include <sensors/proximity.h>
 #include <sensors/imu.h>
-#include <arm_math.h>
 #include <motion.h>
 #include <detection.h>
 #include <audio/audio_thread.h>
@@ -44,6 +42,8 @@ int main(void)
 {
     halInit();
     chSysInit();
+
+    //inits the mpu module
     mpu_init();
 
     //starts the serial communication
@@ -63,14 +63,14 @@ int main(void)
     //init the IR sensors
     proximity_start();
 
+    //init the speaker for the melodies
     dac_start();
-
-    //init motion and detection processes
     playMelodyStart();
     chThdSleepMilliseconds(500);
+
+    //init motion and detection processes
     motion_start();
     detection_start();
-
 
     while (1) {
     		//waits 1 second

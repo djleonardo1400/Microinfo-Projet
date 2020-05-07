@@ -9,16 +9,11 @@
 #include <sensors/imu.h>
 #include <detection.h>
 #include <arm_math.h>
-//#include <chprintf.h>
 #include <leds.h>
 #include <audio/audio_thread.h>
 #include <audio/play_melody.h>
 #include <melodies.h>
 
-#define NB_AXIS 3
-#define X_AXIS 0
-#define Y_AXIS 1
-#define Z_AXIS 2
 #define THRESHOLD_ACC 500
 #define THRESHOLD_STOP 1000
 #define MAX_INCLINATION 2600
@@ -44,17 +39,16 @@ static THD_FUNCTION(Motion, arg) {
     int16_t rot_speedR = 0;
     int16_t let_rotate = 0;
     float inclination = 0;
-    float angle;
+    float angle = 0;
+    float abs_angle = 0;
 
     //calibration for accelerations offsets, 20 samples
     acc_offsets[X_AXIS] = get_acc_filtered(X_AXIS, 20);
     acc_offsets[Y_AXIS] = get_acc_filtered(Y_AXIS, 20);
     acc_offsets[Z_AXIS] = get_acc_filtered(Z_AXIS, 20);
 
-    //dac_start();
-    //playMelody(MARIO_START,0,NULL);
+    //melody plays after IMU calibration
     playMelody(EXTERNAL_SONG,ML_SIMPLE_PLAY,get_xp_boot());
-    //dac_stop();
 
     while(1){
 
@@ -64,12 +58,12 @@ static THD_FUNCTION(Motion, arg) {
     		acc_true[X_AXIS] = get_acc_filtered(X_AXIS, 10) - acc_offsets[X_AXIS];
     		acc_true[Y_AXIS] = get_acc_filtered(Y_AXIS, 10) - acc_offsets[Y_AXIS];
 
-
     		//angle formed between X and Y axis, used for alignment.
     		angle = atan(((float) acc_true[X_AXIS])/acc_true[Y_AXIS]);
+    		abs_angle = fabs(angle);
 
     		//rotation speed attribution
-    		if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ACC){
+    		if(abs_angle<MAX_ANGLE_PROPORTIONAL_R_SPEED && acc_true[Y_AXIS] < -THRESHOLD_ACC){
     			rot_speedR = -ROTATION_CONST*angle;
     			rot_speedL = ROTATION_CONST*angle;
     		}else if(acc_true[X_AXIS]< 0){
@@ -110,18 +104,17 @@ static THD_FUNCTION(Motion, arg) {
     			if(acc_true[Y_AXIS] > THRESHOLD_ACC){
     				advance_speed=0;
     			}
-    			else if(fabs(angle)<MAX_ANGLE_PROPORTIONAL_R_SPEED && abs(acc_true[X_AXIS]) > THRESHOLD_ACC){
-    				advance_speed = MAX_ADVANCE_SPEED*((MAX_ANGLE_PROPORTIONAL_R_SPEED - fabs(angle))/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
+    			else if(abs_angle<MAX_ANGLE_PROPORTIONAL_R_SPEED && abs(acc_true[X_AXIS]) > THRESHOLD_ACC){
+    				advance_speed = MAX_ADVANCE_SPEED*((MAX_ANGLE_PROPORTIONAL_R_SPEED - abs_angle)/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
     			}else if(abs(acc_true[X_AXIS])< THRESHOLD_ACC){
-    				advance_speed = MAX_ADVANCE_SPEED*((MAX_ANGLE_PROPORTIONAL_R_SPEED - fabs(angle))/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
+    				advance_speed = MAX_ADVANCE_SPEED*((MAX_ANGLE_PROPORTIONAL_R_SPEED - abs_angle)/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
 
     				//rotation do not occur when aligned
     				rot_speedR = 0;
     				rot_speedL = 0;
     			}
-
     			//only rotation when angle is too big
-    			if(fabs(angle)>MAX_ANGLE_PROPORTIONAL_R_SPEED){
+    			if(abs_angle>MAX_ANGLE_PROPORTIONAL_R_SPEED){
     				advance_speed = 0;
     			}
     		}
@@ -133,11 +126,12 @@ static THD_FUNCTION(Motion, arg) {
     		right_motor_set_speed(advance_speed + rot_speedR);
     		left_motor_set_speed(advance_speed + rot_speedL);
 
-    		//Waits 10ms (100Hz)
-    		chThdSleepUntilWindowed(time, time + MS2ST(10));
+    		//Waits 130ms. Thread code takes 120 ms (margin is added for safety).
+    		chThdSleepUntilWindowed(time, time + MS2ST(130));
     }
 }
 
+//creates motion thread
 void motion_start(void){
 	chThdCreateStatic(waMotion, sizeof(waMotion), NORMALPRIO, Motion, NULL);
 }

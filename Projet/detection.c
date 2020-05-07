@@ -9,8 +9,6 @@
 #include <motors.h>
 #include <sensors/proximity.h>
 #include <leds.h>
-#include <chprintf.h>
-#include <audio/audio_thread.h>
 #include <audio/play_melody.h>
 #include <melodies.h>
 
@@ -46,10 +44,12 @@ static THD_FUNCTION(Detection, arg) {
     		obstacle_in_front(ir_values);
     		led_play(ir_values);
 
+    		//Waits 10ms (100Hz)
     		chThdSleepUntilWindowed(time, time + MS2ST(10));
     }
 }
 
+//creates detection thread
 void detection_start(void){
 	chThdCreateStatic(waDetection, sizeof(waDetection), NORMALPRIO, Detection, NULL);
 }
@@ -76,12 +76,14 @@ void led_play(int ir_val[]){
 
 }
 //check if there's an obstacle in front of the robot. canAdvance is set adequately.
+//plays win melody if all IR sensors are covered
 void obstacle_in_front(int ir_val[]){
 
 	if(ir_val[IR_1]>IR_TRESHOLD || ir_val[IR_8]>IR_TRESHOLD ||ir_val[IR_2]>IR_TRESHOLD ||ir_val[IR_7]>IR_TRESHOLD){
 		canAdvance = false;
 	} else canAdvance = true;
 
+	//when all sensors are covered means that one has escaped the labyrinth (finished the game)
 	if(ir_val[IR_1]>IR_TRESHOLD && ir_val[IR_2]>IR_TRESHOLD && ir_val[IR_3]>IR_TRESHOLD && ir_val[IR_4]>IR_TRESHOLD
 		&& ir_val[IR_5]>IR_TRESHOLD && ir_val[IR_6]>IR_TRESHOLD && ir_val[IR_7]>IR_TRESHOLD && ir_val[IR_8]>IR_TRESHOLD){
 
@@ -90,6 +92,8 @@ void obstacle_in_front(int ir_val[]){
 	}
 }
 
+//returns canAdvance which tells the robot if he can advance or not
+//depending if there's an obstacle in front of it
 bool get_canAdvance(void){
 	return canAdvance;
 }
