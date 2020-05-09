@@ -13,10 +13,15 @@
 #include <melodies.h>
 
 #define IR_TRESHOLD 200
-static bool canAdvance = true;
 enum senors {IR_1, IR_2, IR_3, IR_4, IR_5, IR_6, IR_7, IR_8};
+static bool canAdvance = true;
 
+//switch on desired LEDs for each IR sensor when robot is too close to obstacle:
+//IR1: L1 | IR2: L1,L3 | IR3: L3 | IR4: L3,L5 | IR5: L5,L7 | IR6: L7 | IR7: L7,L1 | IR8: L1
 void led_play(int ir_val[]);
+
+//check if there's an obstacle in front of the robot. canAdvance is set adequately.
+//plays win melody if all IR sensors are covered
 void obstacle_in_front(int ir_val[]);
 
 //detection thread declaration
@@ -85,9 +90,8 @@ void obstacle_in_front(int ir_val[]){
 
 	//when all sensors are covered means that one has escaped the labyrinth (finished the game)
 	if(ir_val[IR_1]>IR_TRESHOLD && ir_val[IR_2]>IR_TRESHOLD && ir_val[IR_3]>IR_TRESHOLD && ir_val[IR_4]>IR_TRESHOLD
-		&& ir_val[IR_5]>IR_TRESHOLD && ir_val[IR_6]>IR_TRESHOLD && ir_val[IR_7]>IR_TRESHOLD && ir_val[IR_8]>IR_TRESHOLD){
-
-		 //playMelody(5,0,NULL);
+		&& ir_val[IR_5]>IR_TRESHOLD && ir_val[IR_6]>IR_TRESHOLD && ir_val[IR_7]>IR_TRESHOLD && ir_val[IR_8]>IR_TRESHOLD)
+	{
 		playMelody(EXTERNAL_SONG,ML_SIMPLE_PLAY,get_ffv_win());
 	}
 }

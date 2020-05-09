@@ -9,20 +9,18 @@
 #include <sensors/imu.h>
 #include <detection.h>
 #include <arm_math.h>
-#include <leds.h>
 #include <audio/audio_thread.h>
 #include <audio/play_melody.h>
 #include <melodies.h>
 
 #define THRESHOLD_ACC 500
 #define THRESHOLD_STOP 1000
-#define MAX_INCLINATION 2600
-#define FACTOR 10000
+#define MAX_INCLINATION 0.26
 #define MAX_ROTATION_SPEED 500
 #define MAX_ADVANCE_SPEED 750
 #define CYCLES_TO_DESTUCK_180 10
 #define MAX_ANGLE_PROPORTIONAL_R_SPEED 0.68
-#define ROTATION_CONST 735
+#define ROTATION_CONST 735 // used as constant to get rotation speed (MAX_ANGLE_PROPORTIONAL_R_SPEED*ROTATION_CONST = MAX_ROTATION_SPEED)
 
 //motion thread declaration
 static THD_WORKING_AREA(waMotion, 256);
@@ -74,8 +72,8 @@ static THD_FUNCTION(Motion, arg) {
     			rot_speedL = -MAX_ROTATION_SPEED;
     		}
 
-    		//Destucking when new direction is changed to 180°.
-    		//Solves a problem that made the robot sometimes "shake" because of X axis value that changed sign very often near 0 value (180°).
+    		//Correction when new direction is changed to 180°.
+    		//Solves a problem that made the robot sometimes "shake" because of X axis value that changed sign very often near 0 value (180° when Y > 0).
     		//We let the robot rotate anti-clockwise for 10 cycles to get it out of that problematic zone and let the other conditions handle back when done.
     		if(acc_true[Y_AXIS] >THRESHOLD_ACC && acc_true[X_AXIS]>-THRESHOLD_ACC && acc_true[X_AXIS]<THRESHOLD_ACC){
     			let_rotate = CYCLES_TO_DESTUCK_180;
@@ -96,7 +94,7 @@ static THD_FUNCTION(Motion, arg) {
     		}else if(get_canAdvance()){
 
     			//inclination calculation: Y axis over Z axis
-    			inclination = (FACTOR*abs(acc_true[Y_AXIS]))/abs(acc_offsets[Z_AXIS]);
+    			inclination = fabs(((float) acc_true[Y_AXIS])/acc_offsets[Z_AXIS]);
     			if(inclination > MAX_INCLINATION) inclination = MAX_INCLINATION;
 
     			//determination of advance_speed as function of inclination and alignment (angle)
@@ -109,7 +107,7 @@ static THD_FUNCTION(Motion, arg) {
     			}else if(abs(acc_true[X_AXIS])< THRESHOLD_ACC){
     				advance_speed = MAX_ADVANCE_SPEED*((MAX_ANGLE_PROPORTIONAL_R_SPEED - abs_angle)/MAX_ANGLE_PROPORTIONAL_R_SPEED)*inclination/MAX_INCLINATION;
 
-    				//rotation do not occur when aligned
+    				//rotation do not occur when perfectly aligned
     				rot_speedR = 0;
     				rot_speedL = 0;
     			}
@@ -122,6 +120,7 @@ static THD_FUNCTION(Motion, arg) {
     		if(!get_canAdvance()){
     			advance_speed = 0;
     		}
+
     		//set motors speed
     		right_motor_set_speed(advance_speed + rot_speedR);
     		left_motor_set_speed(advance_speed + rot_speedL);

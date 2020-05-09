@@ -24,7 +24,7 @@ static const melody_t ffv_win = {
 
 //WINDOWS XP BOOT SOUND
 static const uint16_t xp_boot_melody[] = {
-	NOTE_DS5,0,NOTE_DS4,NOTE_AS4,0,0,NOTE_GS4,0,0,0,NOTE_DS5,0,NOTE_AS4
+	NOTE_DS5, 0, NOTE_DS4, NOTE_AS4, 0, 0, NOTE_GS4, 0, 0, 0, NOTE_DS5, 0, NOTE_AS4
 };
 
 static const float xp_boot_tempo[] = {
