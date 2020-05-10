@@ -52,7 +52,7 @@ static THD_FUNCTION(Motion, arg) {
 
     		time = chVTGetSystemTime();
 
-    		//actual accelerations, filtered for abrupt acceleration changes and noise
+    		//actual accelerations, filtered 10 samples for abrupt acceleration changes and noise compensation
     		acc_true[X_AXIS] = get_acc_filtered(X_AXIS, 10) - acc_offsets[X_AXIS];
     		acc_true[Y_AXIS] = get_acc_filtered(Y_AXIS, 10) - acc_offsets[Y_AXIS];
 
@@ -116,6 +116,7 @@ static THD_FUNCTION(Motion, arg) {
     				advance_speed = 0;
     			}
     		}
+
     		//check if there's an obstacle in front of robot. Only rotation allowed if so.
     		if(!get_canAdvance()){
     			advance_speed = 0;
